@@ -1,13 +1,14 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { isBlockType, type BlockType } from '../engine/blocks'
+import type { BlockType } from '../engine/blocks'
 import type { LineTone } from '../engine/ops'
 import { submit } from '../engine/executor'
 import { useTerminal } from '../store/terminalStore'
 import { useWorld } from '../store/worldStore'
 import { BLOCK_COLOR } from '../world/textures'
-import { complete, isCommandName } from './dsl/commands'
+import { complete } from './dsl/commands'
+import { classify } from './highlight'
 
-const QUICK = ['help', 'place gold', 'move forward 3', 'fill brick -3 0 2 3 4 6 hollow', 'time night', 'weather rain', 'undo']
+const QUICK = ['help', 'place gold', 'move forward 3', 'fill brick -3 0 2 3 4 6 hollow', 'time night', 'replay', 'logros']
 
 const WELCOME: [string, LineTone][] = [
   ['blockscript v0.1: un mundo que se programa', 'info'],
@@ -18,36 +19,18 @@ const WELCOME: [string, LineTone][] = [
   ['click en el mundo copia coordenadas al prompt (shift+click: el bloque apuntado)', 'output'],
 ]
 
-/** Splits a prompt into pieces with a highlight class: commands, numbers, block names. */
-function classify(text: string) {
-  const out: { part: string; cls: string }[] = []
-  let expectCommand = true
-  for (const part of text.split(/(\s+|;)/)) {
-    if (!part) continue
-    const lower = part.toLowerCase()
-    let cls = ''
-    if (part === ';') cls = 'hl-sep'
-    else if (/^\s+$/.test(part)) cls = 'ws'
-    else if (expectCommand) cls = isCommandName(lower) ? 'hl-cmd' : 'hl-bad'
-    else if (/^~?-?\d*$/.test(part)) cls = 'hl-num'
-    else if (isBlockType(lower)) cls = 'hl-block'
-    if (cls !== 'ws') expectCommand = part === ';'
-    out.push({ part, cls })
-  }
-  return out
-}
-
+/** Colors commands, numbers and block names as the user types them. */
 function Highlight({ text }: { text: string }) {
   return (
     <>
-      {classify(text).map(({ part, cls }, i) =>
-        cls === 'ws' ? (
+      {classify(text).map(({ part, kind }, i) =>
+        kind === 'ws' ? (
           <Fragment key={i}>{part}</Fragment>
         ) : (
           <span
             key={i}
-            className={cls}
-            style={cls === 'hl-block' ? { ['--swatch' as string]: BLOCK_COLOR[part.toLowerCase() as BlockType] } : undefined}
+            className={`hl-${kind}`}
+            style={kind === 'block' ? { ['--swatch' as string]: BLOCK_COLOR[part.toLowerCase() as BlockType] } : undefined}
           >
             {part}
           </span>

@@ -19,7 +19,7 @@ export interface CommandContext {
   get(x: number, y: number, z: number): BlockType | undefined
 }
 
-export type MetaAction = 'undo' | 'redo' | 'reset' | 'clear'
+export type MetaAction = 'undo' | 'redo' | 'reset' | 'clear' | 'replay' | 'achievements'
 
 export interface OutLine {
   text: string
@@ -30,6 +30,8 @@ export interface CommandResult {
   ops: Op[]
   lines: OutLine[]
   meta?: MetaAction
+  /** Canonical name of the command that ran (aliases resolved). */
+  command?: string
 }
 
 export interface CommandDef {
@@ -338,6 +340,14 @@ export const COMMANDS: CommandDef[] = [
   { name: 'redo', usage: 'redo', summary: 'rehace lo deshecho', run: () => result([], [], 'redo') },
   { name: 'reset', usage: 'reset', summary: 'vuelve el mundo al inicio', run: () => result([], [], 'reset') },
   { name: 'clear', aliases: ['cls'], usage: 'clear', summary: 'limpia la consola', run: () => result([], [], 'clear') },
+  { name: 'replay', usage: 'replay', summary: 'reproduce tu construcción como video', run: () => result([], [], 'replay') },
+  {
+    name: 'achievements',
+    aliases: ['logros'],
+    usage: 'achievements',
+    summary: 'muestra los logros desbloqueados',
+    run: () => result([], [], 'achievements'),
+  },
 ]
 
 const ALL_NAMES = COMMANDS.flatMap((c) => [c.name, ...(c.aliases ?? [])])
@@ -362,7 +372,7 @@ export function runCommand(input: string, ctx: CommandContext): CommandResult {
     const guess = closest(head.value, ALL_NAMES)
     throw new CommandError(`comando desconocido: ${head.raw}`, guess ? `¿quisiste decir "${guess}"?` : 'escribí help para ver los comandos')
   }
-  return def.run(args, ctx)
+  return { ...def.run(args, ctx), command: def.name }
 }
 
 /** Candidates that complete the last word of the prompt. */

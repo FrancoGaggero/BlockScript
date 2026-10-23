@@ -7,6 +7,14 @@ import { seedWorld, VoxelWorld } from '../engine/voxelWorld'
 export const world = new VoxelWorld()
 seedWorld(world)
 
+/** The world as it was after the last reset, plus every block change since: the replay's source. */
+const baseSnapshot: [string, BlockType][] = [...world.blocks]
+const buildLog: [string, BlockType | null][] = []
+
+export function replaySnapshot() {
+  return { base: [...baseSnapshot], log: [...buildLog] }
+}
+
 /** key → performance.now() when the block appeared, read by the renderer for the drop-in animation. */
 export const spawnTimes = new Map<string, number>()
 
@@ -63,6 +71,7 @@ function writeBlocks(changes: Iterable<[string, BlockType | undefined]>, animate
   for (const [k, block] of changes) {
     const prev = world.setKey(k, block)
     if (prev === block) continue
+    buildLog.push([k, block ?? null])
     if (prev) dirty.add(prev)
     if (block) {
       dirty.add(block)
@@ -172,6 +181,8 @@ export const useWorld = create<WorldStore>((set, get) => ({
     world.clear()
     seedWorld(world)
     spawnTimes.clear()
+    buildLog.length = 0
+    baseSnapshot.splice(0, baseSnapshot.length, ...world.blocks)
     const versions = get().typeVersions
     set({
       typeVersions: bump(versions, new Set(BLOCK_TYPES)),

@@ -8,17 +8,23 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "studio": "remotion studio src/motion/index.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "@remotion/google-fonts": "4.0.538",
+    "@remotion/player": "4.0.538",
+    "@remotion/three": "4.0.538",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "remotion": "4.0.538",
     "three": "^0.186.1",
     "zustand": "^5.0.16"
   },
   "devDependencies": {
+    "@remotion/cli": "4.0.538",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

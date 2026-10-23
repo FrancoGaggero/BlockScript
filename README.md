@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-`npm test` corre los tests del DSL y `npm run build` arma el build de producción.
+`npm test` corre los tests del DSL, `npm run build` arma el build de producción y `npm run studio` abre Remotion Studio con las composiciones.
 
 ## Comandos
 
@@ -22,6 +22,8 @@ place glass ~ ~2 ~
 time sunset; weather rain
 camera follow
 undo
+replay        # timelapse de tu construcción en video
+logros        # logros desbloqueados
 ```
 
 - `;` encadena comandos. Si uno falla, se cancelan los siguientes.
@@ -37,9 +39,22 @@ src/
   console/  Terminal + DSL (tokenizer, comandos, sugerencias)
   store/    zustand: estado del mundo con undo/redo, terminal, event bus
   world/    escena R3F: isla, bloques instanciados, bot, atmósfera, cámara, cursor
+  motion/   capa Remotion: composiciones (Intro, CommandBurst, AchievementCard, BuildReplay) y los Players de la app
+  achievements/  logros que escuchan el event bus
 ```
 
-Todo, sea DSL o el futuro modo JS, produce `Op[]`. Esa misma lista va a alimentar los replays en Remotion.
+## Motion graphics
+
+Las composiciones de Remotion corren en vivo dentro de la app con `@remotion/player`:
+
+- **Intro**: el logo se arma con bloques que caen y la consola tipea `help`.
+- **CommandBurst**: cada comando que cambia el mundo aparece con tipografía cinética y un contador.
+- **AchievementCard**: tarjeta animada al desbloquear un logro.
+- **BuildReplay**: `replay` reproduce toda la sesión como timelapse 3D con `@remotion/three`, a partir del mismo log de cambios que generó la consola.
+
+Las mismas composiciones están registradas en [src/motion/Root.tsx](src/motion/Root.tsx), así que se pueden previsualizar y renderizar a MP4 desde Studio.
+
+Todo, sea DSL o el futuro modo JS, produce `Op[]`. Los cambios que esas ops hacen en el mundo quedan en un log que alimenta el replay de Remotion.
 
 Las texturas pixel-art se generan por código ([src/world/textures.ts](src/world/textures.ts)), así que el proyecto no usa arte de terceros.
 
@@ -47,7 +62,7 @@ Las texturas pixel-art se generan por código ([src/world/textures.ts](src/world
 
 - [x] Fase 1–4: mundo voxel, terminal, DSL, motor de ops, undo/redo
 - [ ] Modo JS en un Web Worker sandbox
-- [ ] Capa de motion graphics con `@remotion/player` (intro, command burst, logros, replay)
+- [x] Capa de motion graphics con `@remotion/player` (intro, command burst, logros, replay)
 - [ ] Misiones guiadas
 - [ ] Compartir por URL, sonido, pulido mobile
 - [ ] Video promo renderizado con Remotion y case study

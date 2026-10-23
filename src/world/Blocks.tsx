@@ -1,26 +1,14 @@
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { BLOCK_TYPES, parseKey, type BlockType } from '../engine/blocks'
+import { BLOCK_TYPES, type BlockType } from '../engine/blocks'
 import { spawnTimes, useWorld, world } from '../store/worldStore'
+import { nextCapacity, writeBlockMatrix as writeMatrix } from './blockMatrix'
 import { cellHandlers } from './pointer'
 import { blockMaterials } from './textures'
 
 const geometry = new THREE.BoxGeometry(1, 1, 1)
 const DROP_MS = 420
-const tmp = new THREE.Object3D()
-
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
-const easeOutBack = (t: number) => 1 + 2.4 * (t - 1) ** 3 + 1.4 * (t - 1) ** 2
-
-/** Drop-in: the block falls from above and pops to full size. */
-function writeMatrix(mesh: THREE.InstancedMesh, index: number, k: string, progress: number) {
-  const [x, y, z] = parseKey(k)
-  tmp.position.set(x, y + (1 - easeOutCubic(progress)) * 1.4, z)
-  tmp.scale.setScalar(0.25 + 0.75 * easeOutBack(progress))
-  tmp.updateMatrix()
-  mesh.setMatrixAt(index, tmp.matrix)
-}
 
 function BlockLayer({ type }: { type: BlockType }) {
   const version = useWorld((s) => s.typeVersions[type])
@@ -32,11 +20,7 @@ function BlockLayer({ type }: { type: BlockType }) {
   // Instanced meshes have a fixed capacity: grow it in powers of two as the layer fills up.
   const [capacity, setCapacity] = useState(256)
   const needed = world.byType[type].size
-  if (needed > capacity) {
-    let next = capacity
-    while (next < needed) next *= 2
-    setCapacity(next)
-  }
+  if (needed > capacity) setCapacity(nextCapacity(needed, capacity))
 
   useLayoutEffect(() => {
     const mesh = meshRef.current

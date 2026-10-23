@@ -1,7 +1,20 @@
+import type { Achievement } from '../achievements/achievements'
+import type { BlockType } from '../engine/blocks'
+
 /** Typed app-wide events. The motion-graphics layer subscribes here to react to the console. */
 export interface AppEvents {
-  commandExecuted: { input: string; placed: number; removed: number; moved: number }
+  /** One line submitted to the prompt, possibly several `;`-separated commands. */
+  inputSubmitted: { input: string; commands: number }
+  commandExecuted: {
+    input: string
+    command: string
+    placed: number
+    removed: number
+    moved: number
+    placedByType: Partial<Record<BlockType, number>>
+  }
   commandFailed: { input: string; message: string }
+  achievementUnlocked: { achievement: Achievement }
 }
 
 type Handler<T> = (payload: T) => void

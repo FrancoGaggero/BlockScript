@@ -1,8 +1,11 @@
+import { achievementList } from '../achievements/achievements'
 import { runCommand, type CommandResult } from '../console/dsl/commands'
 import { CommandError } from '../console/dsl/tokenizer'
 import { emit } from '../store/eventBus'
 import { useTerminal } from '../store/terminalStore'
-import { useWorld, world } from '../store/worldStore'
+import { replaySnapshot, useWorld, world } from '../store/worldStore'
+import { useMotion } from '../motion/motionStore'
+import type { BlockType } from './blocks'
 import type { LineTone } from './ops'
 import { play } from './player'
 
@@ -18,7 +21,9 @@ export function submit(raw: string) {
   const term = useTerminal.getState()
   term.print(input, 'input')
   term.pushHistory(input)
-  for (const part of input.split(';')) if (part.trim()) queue.push(part.trim())
+  const parts = input.split(';').map((p) => p.trim()).filter(Boolean)
+  queue.push(...parts)
+  emit('inputSubmitted', { input, commands: parts.length })
   pump()
 }
 
@@ -48,11 +53,17 @@ function pump() {
   }
 
   for (const line of res.lines) print(line.text, line.tone)
+  const command = res.command ?? ''
+  const noChange = { input, command, placed: 0, removed: 0, moved: 0, placedByType: {} }
   if (res.meta) {
     runMeta(res.meta)
+    emit('commandExecuted', noChange)
     return finish()
   }
-  if (!res.ops.length) return finish()
+  if (!res.ops.length) {
+    emit('commandExecuted', noChange)
+    return finish()
+  }
 
   store.beginTx()
   play(res.ops, {
@@ -62,12 +73,14 @@ function pump() {
     },
     done() {
       const tx = useWorld.getState().commitTx()
+      const placedByType: Partial<Record<BlockType, number>> = {}
+      for (const c of tx?.changes ?? []) if (c.after) placedByType[c.after] = (placedByType[c.after] ?? 0) + 1
       const placed = tx?.changes.filter((c) => c.after).length ?? 0
       const removed = tx?.changes.filter((c) => !c.after).length ?? 0
       const moved = res.ops.filter((o) => o.type === 'bot').length
       const parts = [placed && `+${placed} bloque${placed === 1 ? '' : 's'}`, removed && `−${removed}`].filter(Boolean)
       if (parts.length) print(`✓ ${parts.join('  ')}`, 'success')
-      emit('commandExecuted', { input, placed, removed, moved })
+      emit('commandExecuted', { input, command, placed, removed, moved, placedByType })
       finish()
     },
   })
@@ -98,5 +111,21 @@ function runMeta(meta: NonNullable<CommandResult['meta']>) {
     case 'clear':
       useTerminal.getState().clear()
       break
+    case 'replay': {
+      const snapshot = replaySnapshot()
+      if (!snapshot.log.length) {
+        print('todavía no construiste nada: probá un fill y después replay', 'warn')
+        break
+      }
+      useMotion.getState().openReplay(snapshot)
+      print(`▶ replay de ${snapshot.log.length} cambios (Esc para cerrar)`, 'success')
+      break
+    }
+    case 'achievements': {
+      const list = achievementList()
+      print(`logros: ${list.filter((a) => a.unlocked).length}/${list.length}`, 'info')
+      for (const a of list) print(`  ${a.unlocked ? '★' : '·'} ${a.title.padEnd(20)}${a.description}`, a.unlocked ? 'success' : 'hint')
+      break
+    }
   }
 }
