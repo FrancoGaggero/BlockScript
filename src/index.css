@@ -466,3 +466,81 @@ button {
 .replay-dialog header button:hover {
   color: var(--accent);
 }
+
+/* ── script editor (js mode) ────────────────────────────────────────────── */
+
+.script-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 58%;
+  min-height: 0;
+  border-top: 1px solid var(--line);
+}
+
+.script-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.script-file {
+  padding: 2px 8px;
+  border-bottom: 2px solid var(--accent);
+  color: #fff;
+}
+.script-spacer {
+  flex: 1;
+}
+.script-bar select,
+.script-bar button {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+}
+.script-bar button:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+.script-bar .script-run {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0e1a;
+  font-weight: 800;
+}
+.script-bar .script-run:hover:not(:disabled) {
+  color: #0a0e1a;
+  background: #c8ff6a;
+}
+.script-bar .script-run:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.script-bar kbd {
+  font: inherit;
+  font-weight: 400;
+  opacity: 0.65;
+  margin-left: 4px;
+}
+
+.script-host {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 820px) {
+  .script-bar kbd {
+    display: none;
+  }
+}
+.script-loading {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}

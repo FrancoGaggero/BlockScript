@@ -20,6 +20,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'night-owl', title: 'Noctámbulo', description: 'Hiciste de noche', block: 'neon' },
   { id: 'storm', title: 'Tormenta', description: 'Hiciste llover', block: 'glass' },
   { id: 'demolition', title: 'Demolición', description: '50 bloques removidos', block: 'stone' },
+  { id: 'programmer', title: 'Programador', description: 'Tu primer script construyó algo', block: 'neon' },
   { id: 'time-travel', title: 'Viaje en el tiempo', description: 'Usaste undo', block: 'wood' },
 ]
 
@@ -64,6 +65,7 @@ function onCommand(e: AppEvents['commandExecuted']) {
   if (e.command === 'time' && /\bnight\b/i.test(e.input)) unlock('night-owl')
   if (e.command === 'weather' && /\brain\b/i.test(e.input)) unlock('storm')
   if (e.command === 'undo') unlock('time-travel')
+  if (e.command === 'js' && e.placed > 0) unlock('programmer')
 }
 
 let initialized = false

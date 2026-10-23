@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { BlockType } from '../engine/blocks'
 import type { LineTone } from '../engine/ops'
 import { submit } from '../engine/executor'
@@ -7,8 +7,12 @@ import { useWorld } from '../store/worldStore'
 import { BLOCK_COLOR } from '../world/textures'
 import { complete } from './dsl/commands'
 import { classify } from './highlight'
+import { useScript } from './js/scriptStore'
 
-const QUICK = ['help', 'place gold', 'move forward 3', 'fill brick -3 0 2 3 4 6 hollow', 'time night', 'replay', 'logros']
+// CodeMirror is most of the editor's weight, so it only loads the first time someone types `js`.
+const ScriptEditor = lazy(() => import('./js/ScriptEditor').then((m) => ({ default: m.ScriptEditor })))
+
+const QUICK = ['help', 'js', 'place gold', 'move forward 3', 'fill brick -3 0 2 3 4 6 hollow', 'time night', 'replay', 'logros']
 
 const WELCOME: [string, LineTone][] = [
   ['blockscript v0.1: un mundo que se programa', 'info'],
@@ -16,6 +20,7 @@ const WELCOME: [string, LineTone][] = [
   ['  › fill brick -3 0 2 3 4 6 hollow', 'hint'],
   ['  › move east 4; place neon; turn left', 'hint'],
   ['  › time sunset; weather rain', 'hint'],
+  ['  › js', 'hint'],
   ['click en el mundo copia coordenadas al prompt (shift+click: el bloque apuntado)', 'output'],
 ]
 
@@ -45,6 +50,7 @@ export function Terminal() {
   const input = useTerminal((s) => s.input)
   const setInput = useTerminal((s) => s.setInput)
   const busy = useWorld((s) => s.busy)
+  const scriptOpen = useScript((s) => s.open)
   const [historyIndex, setHistoryIndex] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -126,49 +132,57 @@ export function Terminal() {
         })}
       </div>
 
-      <div className="terminal-input">
-        <span className="prompt">›</span>
-        <div className="input-wrap">
-          <div className="input-mirror" aria-hidden>
-            <Highlight text={input} />
-            <span className="ghost">{ghost}</span>
+      {scriptOpen ? (
+        <Suspense fallback={<div className="script-editor script-loading">cargando editor…</div>}>
+          <ScriptEditor />
+        </Suspense>
+      ) : (
+        <>
+          <div className="terminal-input">
+            <span className="prompt">›</span>
+            <div className="input-wrap">
+              <div className="input-mirror" aria-hidden>
+                <Highlight text={input} />
+                <span className="ghost">{ghost}</span>
+              </div>
+              <input
+                id="term-input"
+                ref={inputRef}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value)
+                  setHistoryIndex(null)
+                }}
+                onKeyDown={onKeyDown}
+                autoFocus
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                aria-label="Comando"
+                placeholder="escribí un comando… (Tab autocompleta)"
+              />
+            </div>
           </div>
-          <input
-            id="term-input"
-            ref={inputRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value)
-              setHistoryIndex(null)
-            }}
-            onKeyDown={onKeyDown}
-            autoFocus
-            autoComplete="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            aria-label="Comando"
-            placeholder="escribí un comando… (Tab autocompleta)"
-          />
-        </div>
-      </div>
 
-      {suggestions.length > 1 && (
-        <div className="suggestions">
-          {suggestions.slice(0, 8).map((s) => (
-            <button key={s} onClick={() => setInput(input.slice(0, input.length - partial.length) + s + ' ')}>
-              {s}
-            </button>
-          ))}
-        </div>
+          {suggestions.length > 1 && (
+            <div className="suggestions">
+              {suggestions.slice(0, 8).map((s) => (
+                <button key={s} onClick={() => setInput(input.slice(0, input.length - partial.length) + s + ' ')}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="quick" aria-label="Comandos rápidos">
+            {QUICK.map((q) => (
+              <button key={q} onClick={() => run(q)}>
+                {q}
+              </button>
+            ))}
+          </div>
+        </>
       )}
-
-      <div className="quick" aria-label="Comandos rápidos">
-        {QUICK.map((q) => (
-          <button key={q} onClick={() => run(q)}>
-            {q}
-          </button>
-        ))}
-      </div>
     </section>
   )
 }

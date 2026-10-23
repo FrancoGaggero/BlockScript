@@ -16,7 +16,7 @@ const BOT_STEP_MS = 170
  */
 export function play(ops: Op[], handlers: PlayHandlers) {
   const blockOps = ops.filter((o) => o.type === 'place' || o.type === 'remove').length
-  const blockCost = blockOps ? Math.min(60, Math.max(1, BUILD_BUDGET_MS / blockOps)) : 0
+  const blockCost = blockOps ? Math.min(60, BUILD_BUDGET_MS / blockOps) : 0
   const cost = (op: Op) =>
     op.type === 'place' || op.type === 'remove' ? blockCost : op.type === 'bot' ? BOT_STEP_MS : op.type === 'wait' ? op.ms : 0
 
@@ -26,7 +26,9 @@ export function play(ops: Op[], handlers: PlayHandlers) {
   let raf = 0
 
   const frame = (now: number) => {
-    acc += Math.min(now - last, 100)
+    // Capped so a backgrounded tab does not dump a whole build at once, but loose enough
+    // that slow devices (a few fps) still play builds at roughly real speed.
+    acc += Math.min(now - last, 400)
     last = now
     const due: Op[] = []
     while (i < ops.length && acc >= cost(ops[i])) {

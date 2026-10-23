@@ -19,7 +19,7 @@ export interface CommandContext {
   get(x: number, y: number, z: number): BlockType | undefined
 }
 
-export type MetaAction = 'undo' | 'redo' | 'reset' | 'clear' | 'replay' | 'achievements'
+export type MetaAction = 'undo' | 'redo' | 'reset' | 'clear' | 'replay' | 'achievements' | 'js'
 
 export interface OutLine {
   text: string
@@ -340,6 +340,13 @@ export const COMMANDS: CommandDef[] = [
   { name: 'redo', usage: 'redo', summary: 'rehace lo deshecho', run: () => result([], [], 'redo') },
   { name: 'reset', usage: 'reset', summary: 'vuelve el mundo al inicio', run: () => result([], [], 'reset') },
   { name: 'clear', aliases: ['cls'], usage: 'clear', summary: 'limpia la consola', run: () => result([], [], 'clear') },
+  {
+    name: 'js',
+    aliases: ['code', 'editor'],
+    usage: 'js',
+    summary: 'abre el editor para programar en JavaScript',
+    run: () => result([], [], 'js'),
+  },
   { name: 'replay', usage: 'replay', summary: 'reproduce tu construcción como video', run: () => result([], [], 'replay') },
   {
     name: 'achievements',
