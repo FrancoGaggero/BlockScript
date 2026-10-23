@@ -2,6 +2,8 @@
 
 Un mundo de bloques 3D que se programa desde una consola. Cada comando compila a una lista de operaciones (`Op[]`) que se reproduce animada: los bloques caen uno por uno, el bot camina paso a paso y el cielo cambia con la hora y el clima.
 
+**Demo:** [blockscriptshell.netlify.app](https://blockscriptshell.netlify.app)
+
 ## Correr
 
 ```bash
